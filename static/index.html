@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAT AI Examiner - Magic Edition</title>
+    <title>SAT AI Examiner - Personalized</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -33,23 +33,12 @@
         .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- MAGIC EVAPORATE EFFECT (Hiệu ứng bốc hơi) --- */
-        .evaporate-text {
-            animation: evaporateAnim 0.6s ease-out forwards;
-        }
+        /* MAGIC EVAPORATE EFFECT */
+        .evaporate-text { animation: evaporateAnim 0.6s ease-out forwards; }
         @keyframes evaporateAnim {
-            0% { 
-                opacity: 1; 
-                transform: translateY(0) scale(1);
-                filter: blur(0);
-            }
-            100% { 
-                opacity: 0; 
-                transform: translateY(-20px) scale(1.05);
-                filter: blur(4px); /* Làm chữ nhòe đi như khói */
-            }
+            0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+            100% { opacity: 0; transform: translateY(-20px) scale(1.05); filter: blur(4px); }
         }
-        /* -------------------------------------------------- */
 
         /* ROBOT CSS */
         .robot-container { position: relative; width: 120px; height: 120px; margin: 0 auto 20px auto; animation: float 3s ease-in-out infinite; }
@@ -73,15 +62,21 @@
 <body class="gradient-bg min-h-screen flex items-center justify-center p-4 text-slate-800">
 
     <div id="startOverlay" class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-sm flex flex-col items-center justify-center text-center fade-in">
-        <div class="robot-container mb-6 scale-150">
+        <div class="robot-container mb-6 scale-125">
             <div class="robot-antenna"><div class="antenna-ball"></div></div>
             <div class="robot-head">
                 <div class="robot-eyes"><div class="eye"></div><div class="eye"></div></div>
             </div>
         </div>
-        <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight">SAT AI Examiner</h1>
-        <p class="text-slate-300 mb-8 text-lg">Predict Difficulty • Solve Questions • Mozart Symphony</p>
         
+        <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight">SAT AI Examiner</h1>
+        <p class="text-slate-300 mb-6 text-lg">Identify Yourself, Human!</p>
+        
+        <div class="w-full max-w-sm px-8 space-y-3 mb-8">
+            <input type="text" id="userFirstName" placeholder="First Name (e.g., Alex)" class="w-full p-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-center font-bold">
+            <input type="text" id="userLastName" placeholder="Last Name (e.g., Nguyen)" class="w-full p-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-center font-bold">
+        </div>
+
         <button id="startBtn" class="group relative px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full text-xl shadow-lg hover:shadow-blue-500/50 transition-all hover:-translate-y-1">
             <span>Start Experience 🎵</span>
             <div class="absolute inset-0 rounded-full ring-4 ring-white/30 animate-ping"></div>
@@ -161,8 +156,10 @@
                         <div class="robot-eyes"><div class="eye"></div><div class="eye"></div></div>
                     </div>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-800 mb-2">Hello, Human!</h3>
-                <p class="text-slate-500">I'm listening to Mozart while waiting for your question. 🎵</p>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">
+                    Hello, <span id="displayUserName" class="text-blue-600">Human</span>!
+                </h3>
+                <p id="greetingText" class="text-slate-500 italic">I'm listening to Mozart while waiting for your question. 🎵</p>
             </div>
 
             <div id="loadingState" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/90 backdrop-blur-md rounded-r-3xl">
@@ -242,11 +239,35 @@
             "Standard English Conventions": ["Boundaries", "Form, Structure, and Sense"]
         };
 
+        // --- RANDOM GREETINGS ---
+        const greetings = [
+            "Ready to conquer the SAT today? 🚀",
+            "Sharp mind, sharp pencil (or keyboard)! ✍️",
+            "Mozart is here to boost your IQ. 🧠",
+            "Focus mode: ACTIVATED. Let's do this! ⚡",
+            "Every question solved is a step closer to 1600. 🌟",
+            "The best way to predict the future is to create it. ✨",
+            "Keep calm and analyze on. 🧘‍♂️"
+        ];
+
         let isSoundOn = false; 
         const bgMusic = document.getElementById('bgMusic');
         bgMusic.volume = 0.3;
 
         document.getElementById('startBtn').addEventListener('click', () => {
+            // 1. GET USER NAME
+            const fName = document.getElementById('userFirstName').value.trim();
+            const lName = document.getElementById('userLastName').value.trim();
+            const displayName = fName ? fName : "Scholar"; // Default nếu không nhập
+
+            // 2. UPDATE UI
+            document.getElementById('displayUserName').innerText = displayName;
+            
+            // 3. RANDOM GREETING
+            const randomMsg = greetings[Math.floor(Math.random() * greetings.length)];
+            document.getElementById('greetingText').innerText = randomMsg + " 🎵";
+
+            // 4. ANIMATION & AUDIO
             document.getElementById('startOverlay').classList.add('hidden'); 
             isSoundOn = true;
             bgMusic.play().catch(e => { console.error("Audio Play Error:", e); });
@@ -255,6 +276,7 @@
             click.play();
         });
 
+        // Toggle Sound Logic
         document.getElementById('toggleSoundBtn').addEventListener('click', function() {
             isSoundOn = !isSoundOn;
             if (isSoundOn) {
@@ -283,7 +305,6 @@
         });
         document.getElementById('domainSelect').addEventListener('change', () => playClick());
         document.getElementById('topicSelect').addEventListener('change', () => playClick());
-
 
         let voices = [];
         function loadVoices() { voices = window.speechSynthesis.getVoices(); }
@@ -380,30 +401,22 @@
              playClick();
              window.speechSynthesis.cancel();
              
-             // 1. Kích hoạt Animation Bốc hơi cho tất cả Input & Textarea
              const inputs = document.querySelectorAll('#satForm input, #satForm textarea');
              inputs.forEach(el => el.classList.add('evaporate-text'));
 
-             // 2. Đợi 0.6s (cho chữ bay hết) rồi mới Reset thật
              setTimeout(() => {
-                 // Clear Form
                  document.getElementById('satForm').reset();
-                 
-                 // Bỏ class animation để lần sau nhập chữ không bị tàng hình
                  inputs.forEach(el => el.classList.remove('evaporate-text'));
 
-                 // Chuyển màn hình
                  document.getElementById('resultState').classList.add('hidden');
                  document.getElementById('welcomeState').classList.remove('hidden');
 
-                 // Khóa Topic Dropdown lại
                  const tSelect = document.getElementById('topicSelect');
                  tSelect.innerHTML = '<option value="" disabled selected>Waiting...</option>';
                  tSelect.disabled = true;
                  tSelect.className = "w-full p-3 pl-4 bg-slate-100 border border-transparent rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition appearance-none cursor-not-allowed text-slate-400 font-medium";
              }, 600);
         });
-        // ----------------------------------------------------
 
         document.getElementById('replayVoiceBtn').addEventListener('click', () => {
             playClick();
