@@ -1,0 +1,23 @@
+# Bỏ qua các file biên dịch của Python
+__pycache__/
+*.pyc
+
+# Bỏ qua môi trường ảo (Rất quan trọng - KHÔNG BAO GIỜ UP LÊN)
+venv/
+env/
+.venv/
+
+# Bỏ qua các file cấu hình môi trường (Chứa API Key bảo mật)
+.env
+config_local.py
+
+# Bỏ qua file log kết quả chạy (File rác)
+result_log.txt
+*.log
+
+# Bỏ qua cài đặt riêng của VS Code
+.vscode/
+
+# Bỏ qua các file hệ thống
+.DS_Store
+Thumbs.db

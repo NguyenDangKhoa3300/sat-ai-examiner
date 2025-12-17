@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAT AI Examiner - Symphony Edition</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+        .gradient-bg {
+            background: linear-gradient(-45deg, #FF9A9E, #FECFEF, #E0C3FC, #8EC5FC);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .hover-bounce:hover { transform: translateY(-2px); }
+        .click-press:active { transform: scale(0.98); }
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ROBOT CSS */
+        .robot-container { position: relative; width: 120px; height: 120px; margin: 0 auto 20px auto; animation: float 3s ease-in-out infinite; }
+        .robot-head { width: 100%; height: 80%; background: #3b82f6; border-radius: 24px; position: absolute; bottom: 0; display: flex; justify-content: center; align-items: center; overflow: hidden; z-index: 2; box-shadow: inset 0 -10px 0 rgba(0,0,0,0.1), 0 10px 20px rgba(59, 130, 246, 0.3); }
+        .robot-eyes { display: flex; gap: 25px; }
+        .eye { width: 18px; height: 18px; background: white; border-radius: 50%; animation: blink 4s infinite; }
+        .robot-antenna { width: 8px; height: 25px; background: #94a3b8; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); z-index: 1; }
+        .antenna-ball { width: 16px; height: 16px; background: #ef4444; border-radius: 50%; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); animation: ping 1.5s infinite; }
+        .scanner-beam { position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: rgba(255, 255, 255, 0.8); box-shadow: 0 0 15px rgba(255, 255, 255, 0.8); animation: scan 2s linear infinite; opacity: 0.6; }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes blink { 0%, 96%, 100% { transform: scaleY(1); } 98% { transform: scaleY(0.1); } }
+        @keyframes ping { 0% { transform: translateX(-50%) scale(1); opacity: 1; } 100% { transform: translateX(-50%) scale(2); opacity: 0; } }
+        @keyframes scan { 0% { top: 0; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4 text-slate-800">
+
+    <div id="startOverlay" class="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-sm flex flex-col items-center justify-center text-center fade-in">
+        <div class="robot-container mb-6 scale-150">
+            <div class="robot-antenna"><div class="antenna-ball"></div></div>
+            <div class="robot-head">
+                <div class="robot-eyes"><div class="eye"></div><div class="eye"></div></div>
+            </div>
+        </div>
+        <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight">SAT AI Examiner</h1>
+        <p class="text-slate-300 mb-8 text-lg">Predict Difficulty • Solve Questions • Mozart Symphony</p>
+        
+        <button id="startBtn" class="group relative px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full text-xl shadow-lg hover:shadow-blue-500/50 transition-all hover:-translate-y-1">
+            <span>Start Experience 🎵</span>
+            <div class="absolute inset-0 rounded-full ring-4 ring-white/30 animate-ping"></div>
+        </button>
+    </div>
+
+    <div class="glass w-full max-w-6xl rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl fade-in relative">
+        
+        <button id="toggleSoundBtn" class="absolute top-4 right-4 z-50 bg-white/60 hover:bg-white p-2 px-3 rounded-full shadow-sm transition-all text-green-600 hover:text-green-800 flex items-center gap-2 font-bold text-xs uppercase cursor-pointer" title="Toggle Music">
+            <i class="fa-solid fa-music"></i> <span>Music On</span>
+        </button>
+
+        <div class="w-full md:w-1/2 p-8 md:p-10 border-r border-white/40 bg-white/50">
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="bg-blue-600 text-white p-3 rounded-xl shadow-lg">
+                        <i class="fa-solid fa-robot text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">SAT AI Examiner</h1>
+                        <p class="text-slate-500 text-sm font-medium">Predict Difficulty & Solve</p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="satForm" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Domain</label>
+                        <div class="relative group">
+                            <select id="domainSelect" class="w-full p-3 pl-4 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition shadow-sm appearance-none cursor-pointer text-slate-700 font-medium">
+                                <option value="" disabled selected>Select Domain</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400"><i class="fa-solid fa-chevron-down"></i></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Topic</label>
+                        <div class="relative group">
+                            <select id="topicSelect" disabled class="w-full p-3 pl-4 bg-slate-100 border border-transparent rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition appearance-none cursor-not-allowed text-slate-400 font-medium">
+                                <option value="" disabled selected>Waiting...</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400"><i class="fa-solid fa-lock"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Question Content</label>
+                    <textarea id="questionText" rows="5" placeholder="Paste question here..." class="w-full p-4 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition resize-none shadow-sm text-slate-700"></textarea>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block text-xs font-bold text-slate-500 uppercase ml-1">Answer Choices</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="text" id="optA" placeholder="A. Option" class="p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm transition">
+                        <input type="text" id="optB" placeholder="B. Option" class="p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm transition">
+                        <input type="text" id="optC" placeholder="C. Option" class="p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm transition">
+                        <input type="text" id="optD" placeholder="D. Option" class="p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm transition">
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="group w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transform transition-all flex items-center justify-center gap-3 click-press relative overflow-hidden">
+                    <div class="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 skew-x-12 -translate-x-full"></div>
+                    <span class="text-lg">Evaluate Difficulty</span>
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </button>
+            </form>
+        </div>
+
+        <div class="w-full md:w-1/2 bg-white/60 relative flex flex-col items-center justify-center p-8 min-h-[500px] backdrop-blur-sm">
+            
+            <div id="welcomeState" class="text-center max-w-xs fade-in">
+                <div class="robot-container">
+                    <div class="robot-antenna"><div class="antenna-ball"></div></div>
+                    <div class="robot-head">
+                        <div class="robot-eyes"><div class="eye"></div><div class="eye"></div></div>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-800 mb-2">Hello, Human!</h3>
+                <p class="text-slate-500">I'm listening to Mozart while waiting for your question. 🎵</p>
+            </div>
+
+            <div id="loadingState" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/90 backdrop-blur-md rounded-r-3xl">
+                <div class="robot-container" style="animation-duration: 1.5s;">
+                    <div class="robot-antenna"><div class="antenna-ball" style="background: #22c55e;"></div></div>
+                    <div class="robot-head" style="background: #4f46e5;">
+                        <div class="scanner-beam"></div>
+                        <div class="robot-eyes"><div class="eye" style="height: 4px;"></div><div class="eye" style="height: 4px;"></div></div>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-indigo-600 mt-6 animate-pulse">Solving Question...</h3>
+            </div>
+
+            <div id="resultState" class="hidden w-full max-w-md fade-in relative z-10">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Prediction Result</span>
+                    <span id="scoreLabel" class="px-4 py-1 rounded-full text-sm font-bold shadow-sm border">UNKNOWN</span>
+                </div>
+                
+                <div class="flex items-end gap-3 mb-8">
+                    <h2 class="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600" id="scoreNum" style="line-height: 1;">0</h2>
+                    <div class="pb-2">
+                        <span class="text-2xl font-bold text-slate-400">/ 7</span>
+                        <div class="text-sm text-slate-400 font-medium">Band Score</div>
+                    </div>
+                </div>
+
+                <div class="w-full bg-slate-200 rounded-full h-6 mb-8 overflow-hidden shadow-inner p-1">
+                    <div id="scoreBar" class="h-full rounded-full transition-all duration-1500 cubic-bezier(0.34, 1.56, 0.64, 1) w-0 bg-blue-500"></div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-sm font-bold text-slate-800 uppercase flex items-center gap-2">
+                            <i class="fa-solid fa-microchip text-blue-500"></i> AI Reasoning
+                        </h4>
+                        <button id="replayVoiceBtn" class="text-slate-400 hover:text-blue-500" title="Replay">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+
+                    <div class="mb-3 p-3 bg-green-50 rounded-lg border border-green-200 flex items-center gap-3">
+                        <div class="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-sm">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-green-600 uppercase">Correct Answer</span>
+                            <div id="correctAnswerDisplay" class="text-lg font-extrabold text-green-800">Option A</div>
+                        </div>
+                    </div>
+
+                    <p id="reasoningText" class="text-slate-600 text-sm leading-relaxed text-justify max-h-52 overflow-y-auto pr-2 custom-scrollbar">
+                        </p>
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <button id="resetBtn" class="text-sm text-slate-400 hover:text-blue-600 font-medium transition flex items-center justify-center gap-2 mx-auto">
+                        <i class="fa-solid fa-rotate-right"></i> Analyze Another Question
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bgMusic" loop>
+        <source src="/static/mozart.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="soundClick" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+    <audio id="soundSuccess" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+
+    <script>
+        const satStructure = {
+            "Information and Ideas": ["Central Ideas and Details", "Command of Evidence", "Inferences"],
+            "Craft and Structure": ["Words in Context", "Text Structure and Purpose", "Cross-Text Connections"],
+            "Expression of Ideas": ["Rhetorical Synthesis", "Transitions"],
+            "Standard English Conventions": ["Boundaries", "Form, Structure, and Sense"]
+        };
+
+        // AUDIO SYSTEM
+        let isSoundOn = false; 
+        const bgMusic = document.getElementById('bgMusic');
+        bgMusic.volume = 0.3; // Tăng âm lượng lên chút (30%)
+
+        // 1. CLICK START BUTTON TO ENABLE AUDIO
+        document.getElementById('startBtn').addEventListener('click', () => {
+            document.getElementById('startOverlay').classList.add('hidden'); // Ẩn màn hình chào
+            isSoundOn = true;
+            
+            // Phát nhạc nền
+            bgMusic.play().then(() => {
+                console.log("Music started!");
+            }).catch(e => {
+                console.error("Audio Play Error:", e);
+                alert("Vui lòng kiểm tra file mozart.mp3 trong thư mục static!");
+            });
+
+            // Phát tiếng click xác nhận
+            const click = document.getElementById('soundClick');
+            click.volume = 0.5;
+            click.play();
+        });
+
+        // 2. TOGGLE BUTTON LOGIC
+        document.getElementById('toggleSoundBtn').addEventListener('click', function() {
+            isSoundOn = !isSoundOn;
+            if (isSoundOn) {
+                this.innerHTML = '<i class="fa-solid fa-music"></i> <span>Music On</span>';
+                this.classList.replace('text-blue-600', 'text-green-600');
+                bgMusic.play();
+            } else {
+                this.innerHTML = '<i class="fa-solid fa-volume-xmark"></i> <span>Music Off</span>';
+                this.classList.replace('text-green-600', 'text-blue-600');
+                bgMusic.pause();
+                window.speechSynthesis.cancel();
+            }
+        });
+
+        // 3. PLAY CLICK SOUND ON INTERACTION
+        function playClick() {
+            if (isSoundOn) {
+                const s = document.getElementById('soundClick');
+                s.currentTime = 0;
+                s.volume = 0.3;
+                s.play().catch(e=>{});
+            }
+        }
+        
+        // Gắn sự kiện click âm thanh cho tất cả input/select/button
+        document.querySelectorAll('input, select, button, textarea').forEach(el => {
+            el.addEventListener('mousedown', playClick); // Dùng mousedown để phản hồi nhanh hơn click
+        });
+        
+        // Logic Dropdown
+        document.getElementById('domainSelect').addEventListener('change', () => {
+            playClick(); // Force play sound when changing domain
+        });
+        document.getElementById('topicSelect').addEventListener('change', () => {
+            playClick(); 
+        });
+
+
+        // TTS SYSTEM
+        let voices = [];
+        function loadVoices() { voices = window.speechSynthesis.getVoices(); }
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+
+        const readAloud = (text) => {
+            if (!isSoundOn) return;
+            window.speechSynthesis.cancel();
+            
+            const originalVolume = bgMusic.volume;
+            bgMusic.volume = 0.05; // Giảm nhạc nền
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.pitch = 1.2; 
+            utterance.rate = 1.1;
+            
+            if (voices.length > 0) {
+                const voice = voices.find(v => v.name.includes("Google US English") || v.name.includes("Zira"));
+                if (voice) utterance.voice = voice;
+            }
+
+            utterance.onend = () => { bgMusic.volume = originalVolume; };
+            window.speechSynthesis.speak(utterance);
+        };
+
+        // DOMAIN LOGIC
+        const domainSelect = document.getElementById('domainSelect');
+        const topicSelect = document.getElementById('topicSelect');
+
+        for (const domain in satStructure) {
+            domainSelect.add(new Option(domain, domain));
+        }
+
+        domainSelect.addEventListener('change', function() {
+            topicSelect.innerHTML = '<option value="" disabled selected>-- Choose a Topic --</option>';
+            topicSelect.disabled = false;
+            topicSelect.className = "w-full p-3 pl-4 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition shadow-sm appearance-none cursor-pointer text-slate-700 font-medium";
+            satStructure[this.value].forEach(t => topicSelect.add(new Option(t, t)));
+        });
+
+        // FORM SUBMIT
+        document.getElementById('satForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            playClick(); // Sound on submit
+            
+            const topic = topicSelect.value;
+            const qText = document.getElementById('questionText').value;
+
+            if (!topic || topicSelect.disabled) { alert("⚠️ Select Domain/Topic!"); return; }
+            if (!qText) { alert("⚠️ Enter Question!"); return; }
+
+            document.getElementById('welcomeState').classList.add('hidden');
+            document.getElementById('resultState').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden'); 
+            
+            try {
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        child_topic: topic,
+                        question_text: qText,
+                        option_a: document.getElementById('optA').value,
+                        option_b: document.getElementById('optB').value,
+                        option_c: document.getElementById('optC').value,
+                        option_d: document.getElementById('optD').value
+                    })
+                });
+                
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.detail);
+
+                setTimeout(() => showResult(result), 1500);
+
+            } catch (error) {
+                alert("Error: " + error.message);
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('welcomeState').classList.remove('hidden');
+            }
+        });
+
+        function showResult(result) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('resultState').classList.remove('hidden');
+
+            if (isSoundOn) document.getElementById('soundSuccess').play();
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+
+            document.getElementById('correctAnswerDisplay').innerText = result.correct_answer || "Unknown";
+            document.getElementById('scoreNum').innerText = result.predicted_score_band;
+            document.getElementById('reasoningText').innerText = result.reasoning;
+            document.getElementById('scoreLabel').innerText = result.predicted_label;
+            
+            const bar = document.getElementById('scoreBar');
+            let color = "bg-blue-500";
+            if (result.predicted_label === "Easy") color = "bg-emerald-500";
+            else if (result.predicted_label === "Medium") color = "bg-amber-500";
+            else if (result.predicted_label === "Hard") color = "bg-rose-600";
+            
+            bar.className = `h-full rounded-full transition-all duration-1500 w-0 ${color}`;
+            requestAnimationFrame(() => { bar.style.width = `${(result.predicted_score_band / 7) * 100}%`; });
+
+            readAloud(`Correct answer is ${result.correct_answer}. ${result.reasoning}`);
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+             playClick();
+             window.speechSynthesis.cancel();
+             document.getElementById('resultState').classList.add('hidden');
+             document.getElementById('welcomeState').classList.remove('hidden');
+        });
+
+        document.getElementById('replayVoiceBtn').addEventListener('click', () => {
+            playClick();
+            const text = document.getElementById('reasoningText').innerText;
+            const ans = document.getElementById('correctAnswerDisplay').innerText;
+            readAloud(`Correct answer is ${ans}. ${text}`);
+        });
+        
+        loadVoices();
+    </script>
+</body>
+</html>
