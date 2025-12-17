@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAT AI Examiner - Symphony Edition</title>
+    <title>SAT AI Examiner - Magic Edition</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -32,6 +32,24 @@
         .click-press:active { transform: scale(0.98); }
         .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- MAGIC EVAPORATE EFFECT (Hiệu ứng bốc hơi) --- */
+        .evaporate-text {
+            animation: evaporateAnim 0.6s ease-out forwards;
+        }
+        @keyframes evaporateAnim {
+            0% { 
+                opacity: 1; 
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+            100% { 
+                opacity: 0; 
+                transform: translateY(-20px) scale(1.05);
+                filter: blur(4px); /* Làm chữ nhòe đi như khói */
+            }
+        }
+        /* -------------------------------------------------- */
 
         /* ROBOT CSS */
         .robot-container { position: relative; width: 120px; height: 120px; margin: 0 auto 20px auto; animation: float 3s ease-in-out infinite; }
@@ -224,31 +242,19 @@
             "Standard English Conventions": ["Boundaries", "Form, Structure, and Sense"]
         };
 
-        // AUDIO SYSTEM
         let isSoundOn = false; 
         const bgMusic = document.getElementById('bgMusic');
-        bgMusic.volume = 0.3; // Tăng âm lượng lên chút (30%)
+        bgMusic.volume = 0.3;
 
-        // 1. CLICK START BUTTON TO ENABLE AUDIO
         document.getElementById('startBtn').addEventListener('click', () => {
-            document.getElementById('startOverlay').classList.add('hidden'); // Ẩn màn hình chào
+            document.getElementById('startOverlay').classList.add('hidden'); 
             isSoundOn = true;
-            
-            // Phát nhạc nền
-            bgMusic.play().then(() => {
-                console.log("Music started!");
-            }).catch(e => {
-                console.error("Audio Play Error:", e);
-                alert("Vui lòng kiểm tra file mozart.mp3 trong thư mục static!");
-            });
-
-            // Phát tiếng click xác nhận
+            bgMusic.play().catch(e => { console.error("Audio Play Error:", e); });
             const click = document.getElementById('soundClick');
             click.volume = 0.5;
             click.play();
         });
 
-        // 2. TOGGLE BUTTON LOGIC
         document.getElementById('toggleSoundBtn').addEventListener('click', function() {
             isSoundOn = !isSoundOn;
             if (isSoundOn) {
@@ -263,7 +269,6 @@
             }
         });
 
-        // 3. PLAY CLICK SOUND ON INTERACTION
         function playClick() {
             if (isSoundOn) {
                 const s = document.getElementById('soundClick');
@@ -273,21 +278,13 @@
             }
         }
         
-        // Gắn sự kiện click âm thanh cho tất cả input/select/button
         document.querySelectorAll('input, select, button, textarea').forEach(el => {
-            el.addEventListener('mousedown', playClick); // Dùng mousedown để phản hồi nhanh hơn click
+            el.addEventListener('mousedown', playClick); 
         });
-        
-        // Logic Dropdown
-        document.getElementById('domainSelect').addEventListener('change', () => {
-            playClick(); // Force play sound when changing domain
-        });
-        document.getElementById('topicSelect').addEventListener('change', () => {
-            playClick(); 
-        });
+        document.getElementById('domainSelect').addEventListener('change', () => playClick());
+        document.getElementById('topicSelect').addEventListener('change', () => playClick());
 
 
-        // TTS SYSTEM
         let voices = [];
         function loadVoices() { voices = window.speechSynthesis.getVoices(); }
         window.speechSynthesis.onvoiceschanged = loadVoices;
@@ -295,25 +292,20 @@
         const readAloud = (text) => {
             if (!isSoundOn) return;
             window.speechSynthesis.cancel();
-            
             const originalVolume = bgMusic.volume;
-            bgMusic.volume = 0.05; // Giảm nhạc nền
-
+            bgMusic.volume = 0.05; 
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
             utterance.pitch = 1.2; 
             utterance.rate = 1.1;
-            
             if (voices.length > 0) {
                 const voice = voices.find(v => v.name.includes("Google US English") || v.name.includes("Zira"));
                 if (voice) utterance.voice = voice;
             }
-
             utterance.onend = () => { bgMusic.volume = originalVolume; };
             window.speechSynthesis.speak(utterance);
         };
 
-        // DOMAIN LOGIC
         const domainSelect = document.getElementById('domainSelect');
         const topicSelect = document.getElementById('topicSelect');
 
@@ -328,11 +320,9 @@
             satStructure[this.value].forEach(t => topicSelect.add(new Option(t, t)));
         });
 
-        // FORM SUBMIT
         document.getElementById('satForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            playClick(); // Sound on submit
-            
+            playClick(); 
             const topic = topicSelect.value;
             const qText = document.getElementById('questionText').value;
 
@@ -356,12 +346,9 @@
                         option_d: document.getElementById('optD').value
                     })
                 });
-                
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.detail);
-
                 setTimeout(() => showResult(result), 1500);
-
             } catch (error) {
                 alert("Error: " + error.message);
                 document.getElementById('loadingState').classList.add('hidden');
@@ -372,33 +359,51 @@
         function showResult(result) {
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('resultState').classList.remove('hidden');
-
             if (isSoundOn) document.getElementById('soundSuccess').play();
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-
             document.getElementById('correctAnswerDisplay').innerText = result.correct_answer || "Unknown";
             document.getElementById('scoreNum').innerText = result.predicted_score_band;
             document.getElementById('reasoningText').innerText = result.reasoning;
             document.getElementById('scoreLabel').innerText = result.predicted_label;
-            
             const bar = document.getElementById('scoreBar');
             let color = "bg-blue-500";
             if (result.predicted_label === "Easy") color = "bg-emerald-500";
             else if (result.predicted_label === "Medium") color = "bg-amber-500";
             else if (result.predicted_label === "Hard") color = "bg-rose-600";
-            
             bar.className = `h-full rounded-full transition-all duration-1500 w-0 ${color}`;
             requestAnimationFrame(() => { bar.style.width = `${(result.predicted_score_band / 7) * 100}%`; });
-
             readAloud(`Correct answer is ${result.correct_answer}. ${result.reasoning}`);
         }
 
+        // --- MAGIC RESET BUTTON (AUTO-CLEAR & EVAPORATE) ---
         document.getElementById('resetBtn').addEventListener('click', () => {
              playClick();
              window.speechSynthesis.cancel();
-             document.getElementById('resultState').classList.add('hidden');
-             document.getElementById('welcomeState').classList.remove('hidden');
+             
+             // 1. Kích hoạt Animation Bốc hơi cho tất cả Input & Textarea
+             const inputs = document.querySelectorAll('#satForm input, #satForm textarea');
+             inputs.forEach(el => el.classList.add('evaporate-text'));
+
+             // 2. Đợi 0.6s (cho chữ bay hết) rồi mới Reset thật
+             setTimeout(() => {
+                 // Clear Form
+                 document.getElementById('satForm').reset();
+                 
+                 // Bỏ class animation để lần sau nhập chữ không bị tàng hình
+                 inputs.forEach(el => el.classList.remove('evaporate-text'));
+
+                 // Chuyển màn hình
+                 document.getElementById('resultState').classList.add('hidden');
+                 document.getElementById('welcomeState').classList.remove('hidden');
+
+                 // Khóa Topic Dropdown lại
+                 const tSelect = document.getElementById('topicSelect');
+                 tSelect.innerHTML = '<option value="" disabled selected>Waiting...</option>';
+                 tSelect.disabled = true;
+                 tSelect.className = "w-full p-3 pl-4 bg-slate-100 border border-transparent rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition appearance-none cursor-not-allowed text-slate-400 font-medium";
+             }, 600);
         });
+        // ----------------------------------------------------
 
         document.getElementById('replayVoiceBtn').addEventListener('click', () => {
             playClick();
