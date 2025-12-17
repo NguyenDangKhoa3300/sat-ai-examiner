@@ -4,3 +4,6 @@ sqlalchemy
 pandas
 google-generativeai
 python-multipart
+python-dotenv
+psycopg2-binary
+requests
