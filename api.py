@@ -20,7 +20,7 @@ from config import GEMINI_API_KEY, GEMINI_MODEL_NAME
 # --- 0. CONFIGURATION ---
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Use 'gemini-1.5-flash' for the Chatbot (Best balance of speed & intelligence)
+# Use 'gemini-2.5-flash' for the Chatbot (Best balance of speed & intelligence)
 CHAT_MODEL_NAME = "gemini-2.5-flash" 
 
 CHAT_SYSTEM_PROMPT = """
