@@ -21,7 +21,7 @@ from config import GEMINI_API_KEY, GEMINI_MODEL_NAME
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Use 'gemini-1.5-flash' for the Chatbot (Best balance of speed & intelligence)
-CHAT_MODEL_NAME = "gemini-1.5-flash" 
+CHAT_MODEL_NAME = "gemini-2.5-flash" 
 
 CHAT_SYSTEM_PROMPT = """
 You are "Zimi", a super cute and energetic AI Teaching Assistant at ZIM Academy. 
