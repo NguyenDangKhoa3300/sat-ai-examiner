@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library | SAT AI Examiner</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <style>
+        /* CSS riêng cho lúc in PDF để không bị cắt chữ */
+        .pdf-question-container { page-break-inside: avoid; margin-bottom: 20px; }
+    </style>
+</head>
+<body class="gradient-bg h-screen flex overflow-hidden text-slate-800">
+
+    <aside class="sidebar h-full hidden md:flex w-[260px] flex-col bg-white/40 backdrop-blur-xl border-r border-white/50 p-6 z-50">
+        <div class="mb-10 flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg hover:rotate-12 transition">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <span class="font-extrabold text-xl tracking-tight text-slate-800">SAT AI Tool</span>
+        </div>
+
+        <nav class="flex-1 space-y-2">
+            <a href="/app" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/60 hover:text-blue-600 transition-all">
+                <i class="fa-solid fa-wand-magic-sparkles w-5"></i> <span class="font-bold">Workspace</span>
+            </a>
+            <a href="/library" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 transition-all">
+                <i class="fa-solid fa-folder-open w-5"></i> <span class="font-bold">Library</span>
+            </a>
+            <a href="/analytics" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/60 hover:text-blue-600 transition-all">
+                <i class="fa-solid fa-chart-pie w-5"></i> <span class="font-bold">Analytics</span>
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-slate-200/50">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-white border border-blue-100 flex items-center justify-center text-slate-400 font-bold text-lg shadow-sm">👤</div>
+                <div>
+                    <p id="sidebarUserName" class="text-sm font-bold text-slate-700">Teacher</p>
+                    <p class="text-xs text-green-600 font-bold flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> Online</p>
+                </div>
+            </div>
+            <a href="/" class="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-rose-500 transition pl-1">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content flex-1 relative overflow-y-auto p-6 md:p-10">
+        <div class="max-w-7xl mx-auto fade-in">
+            
+            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-6">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">Question Library</h2>
+                    <p class="text-slate-500">Select questions to export exam papers.</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 bg-white/60 p-2.5 rounded-2xl border border-white shadow-sm backdrop-blur-md w-full xl:w-auto">
+                    
+                    <div class="relative flex-1 min-w-[150px]">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Search..." 
+                            class="w-full bg-white border border-slate-200 py-2 pl-10 pr-4 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    </div>
+
+                    <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+
+                    <div class="relative">
+                        <select id="filterDiff" onchange="applyFilters()" class="appearance-none bg-white border border-slate-200 text-slate-700 py-2 pl-4 pr-8 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition">
+                            <option value="All">All Diff</option><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <select id="filterBand" onchange="applyFilters()" class="appearance-none bg-white border border-slate-200 text-slate-700 py-2 pl-4 pr-8 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition">
+                            <option value="All">All Bands</option><script>for(let i=1;i<=7;i++) document.write(`<option value="${i}">Band ${i}</option>`)</script>
+                        </select>
+                    </div>
+
+                    <button onclick="loadLibrary()" class="bg-white hover:bg-slate-50 text-blue-600 border border-blue-100 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm transition" title="Refresh">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                    
+                    <button onclick="exportToPDF()" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg shadow-rose-500/30 transition font-bold text-sm">
+                        <i class="fa-solid fa-file-pdf"></i> Export PDF
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass rounded-3xl overflow-hidden border border-white/60 shadow-xl relative min-h-[400px]">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white/50 border-b border-slate-200/50 text-slate-500 text-[10px] uppercase font-bold tracking-widest">
+                                <th class="p-5 pl-8 w-10">
+                                    <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                </th>
+                                <th class="p-5">ID</th>
+                                <th class="p-5">Topic</th>
+                                <th class="p-5 w-1/3">Question</th>
+                                <th class="p-5 text-center">Diff</th>
+                                <th class="p-5 text-center">Band</th>
+                                <th class="p-5 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="libraryTableBody" class="text-sm text-slate-700 divide-y divide-slate-100/50">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="pdf-template" class="hidden">
+        <div class="p-8 font-serif text-slate-900 bg-white">
+            <div class="text-center mb-8 border-b-2 border-black pb-4">
+                <h1 class="text-3xl font-bold uppercase tracking-wider mb-2">SAT Practice Exam</h1>
+                <p class="text-sm italic text-slate-600">Generated by ZIM AI Examiner</p>
+                <div class="flex justify-between mt-4 text-sm font-bold">
+                    <span>Date: <span id="pdf-date"></span></span>
+                    <span>Student Name: _______________________</span>
+                </div>
+            </div>
+
+            <div id="pdf-content"></div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm fade-in">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
+            <div class="bg-slate-50 p-6 border-b border-slate-100 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold"><i class="fa-solid fa-file-lines"></i></div>
+                    <div><h3 class="font-bold text-lg text-slate-800">Question Details</h3><p class="text-xs text-slate-500 font-mono" id="modalId">#---</p></div>
+                </div>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-white border hover:bg-rose-50 hover:text-rose-500 transition flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-8 overflow-y-auto custom-scrollbar space-y-6 bg-white">
+                <div class="flex gap-2 flex-wrap">
+                    <span id="modalTopic" class="px-3 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold uppercase border border-blue-100">Topic</span>
+                    <span id="modalDiff" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold uppercase border border-slate-200">Diff</span>
+                    <span id="modalBand" class="px-3 py-1 rounded-lg bg-purple-50 text-purple-700 text-[10px] font-bold border border-purple-100">Band</span>
+                </div>
+                <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Question Content</label><div id="modalQuestion" class="p-4 bg-slate-50 rounded-xl text-slate-700 leading-relaxed border border-slate-100 font-medium">...</div></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="p-3 border rounded-xl bg-white text-sm"><span class="font-bold text-slate-400 mr-2">A.</span> <span id="modalOptA">...</span></div>
+                    <div class="p-3 border rounded-xl bg-white text-sm"><span class="font-bold text-slate-400 mr-2">B.</span> <span id="modalOptB">...</span></div>
+                    <div class="p-3 border rounded-xl bg-white text-sm"><span class="font-bold text-slate-400 mr-2">C.</span> <span id="modalOptC">...</span></div>
+                    <div class="p-3 border rounded-xl bg-white text-sm"><span class="font-bold text-slate-400 mr-2">D.</span> <span id="modalOptD">...</span></div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                    <div class="flex items-center gap-2 mb-2 text-green-800 font-bold text-sm"><i class="fa-solid fa-check-circle"></i> Correct Answer: <span id="modalCorrect" class="text-green-600">...</span></div>
+                    <div class="text-[11px] text-green-700 border-t border-green-200 pt-2 mt-2"><span class="font-bold uppercase opacity-70">Notes:</span> <span id="modalNotes">...</span></div>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-100 text-right"><button onclick="closeModal()" class="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg transition">Close</button></div>
+        </div>
+    </div>
+
+    <script>
+        const storedName = localStorage.getItem('zim_user_name');
+        if(storedName) document.getElementById('sidebarUserName').innerText = storedName;
+        else window.location.href = "/";
+
+        let allQuestionsData = [];
+
+        // 1. Load Data
+        async function loadLibrary() {
+            const tbody = document.getElementById('libraryTableBody');
+            tbody.innerHTML = `<tr><td colspan="7" class="p-12 text-center text-slate-400"><i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500"></i></td></tr>`;
+            try {
+                const res = await fetch('/api/questions');
+                const data = await res.json();
+                allQuestionsData = data;
+                applyFilters();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-12 text-center text-rose-500">Failed to load data.</td></tr>`;
+            }
+        }
+
+        // 2. Filter Logic
+        function applyFilters() {
+            const searchKeyword = document.getElementById('searchInput').value.toLowerCase().trim();
+            const diffFilter = document.getElementById('filterDiff').value.toLowerCase();
+            const bandFilter = document.getElementById('filterBand').value;
+
+            let filteredData = allQuestionsData.filter(item => {
+                const itemDiff = item.expert_difficulty ? item.expert_difficulty.trim().toLowerCase() : "";
+                const itemText = (item.question_text + item.child_topic).toLowerCase();
+                const matchSearch = searchKeyword === "" || itemText.includes(searchKeyword);
+                const matchDiff = (diffFilter === "all") || (itemDiff === diffFilter);
+                const matchBand = (bandFilter === "All") || (item.expert_score_band.toString() === bandFilter);
+                return matchSearch && matchDiff && matchBand;
+            });
+            renderTable(filteredData);
+        }
+
+        // 3. Render Table (Updated with Checkbox)
+        function renderTable(data) {
+            const tbody = document.getElementById('libraryTableBody');
+            if(data.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="p-12 text-center text-slate-400">No results.</td></tr>`; return; }
+
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                let badgeClass = "bg-slate-100 text-slate-600 border-slate-200";
+                let icon = "";
+                if(item.expert_difficulty === "Easy") { badgeClass = "bg-emerald-100 text-emerald-700 border-emerald-200"; icon = "🌱"; } 
+                else if(item.expert_difficulty === "Medium") { badgeClass = "bg-amber-100 text-amber-700 border-amber-200"; icon = "⚖️"; } 
+                else if(item.expert_difficulty === "Hard") { badgeClass = "bg-rose-100 text-rose-700 border-rose-200"; icon = "🔥"; }
+
+                const previewText = item.question_text.length > 60 ? item.question_text.substring(0, 60) + "..." : item.question_text;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-blue-50/50 transition group border-b border-slate-50 last:border-0">
+                        <td class="p-5 pl-8">
+                            <input type="checkbox" name="qSelect" value="${item.id}" class="row-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                        </td>
+                        <td class="p-5 font-bold text-slate-300">#${item.id}</td>
+                        <td class="p-5 font-bold text-slate-700 text-xs">${item.child_topic}</td>
+                        <td class="p-5 text-slate-500 text-xs leading-relaxed">${previewText}</td>
+                        <td class="p-5 text-center"><span class="px-3 py-1 rounded-full text-[10px] font-black border ${badgeClass} uppercase">${icon} ${item.expert_difficulty}</span></td>
+                        <td class="p-5 text-center font-black text-slate-700">${item.expert_score_band}</td>
+                        <td class="p-5 text-center flex items-center justify-center gap-2">
+                            <button onclick="openModal(${item.id})" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:bg-blue-600 hover:text-white transition flex items-center justify-center"><i class="fa-solid fa-eye"></i></button>
+                            <button onclick="deleteQuestion(${item.id})" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:bg-rose-500 hover:text-white transition flex items-center justify-center"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 4. Select All Logic
+        function toggleSelectAll() {
+            const master = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+        }
+
+        // 5. EXPORT TO PDF FUNCTION (THE MAGIC)
+        function exportToPDF() {
+            // Lấy danh sách ID đã chọn
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert("⚠️ Please select at least one question to export!");
+                return;
+            }
+
+            const selectedIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+            const selectedQuestions = allQuestionsData.filter(q => selectedIds.includes(q.id));
+
+            // Xây dựng nội dung HTML cho PDF
+            document.getElementById('pdf-date').innerText = new Date().toLocaleDateString();
+            const container = document.getElementById('pdf-content');
+            container.innerHTML = ''; // Reset
+
+            // PHẦN 1: QUESTIONS (Cho học sinh)
+            container.innerHTML += `<h2 class="text-xl font-bold mb-4 border-b pb-2">SECTION 1: QUESTIONS</h2>`;
+            
+            selectedQuestions.forEach((q, index) => {
+                const html = `
+                    <div class="pdf-question-container mb-6">
+                        <div class="font-bold mb-1 text-sm">Question ${index + 1} <span class="text-slate-400 font-normal ml-2">(${q.child_topic})</span></div>
+                        <div class="mb-3 text-justify text-sm leading-relaxed">${q.question_text}</div>
+                        <div class="grid grid-cols-2 gap-2 text-sm pl-4">
+                            <div><span class="font-bold">A.</span> ${q.option_a}</div>
+                            <div><span class="font-bold">B.</span> ${q.option_b}</div>
+                            <div><span class="font-bold">C.</span> ${q.option_c}</div>
+                            <div><span class="font-bold">D.</span> ${q.option_d}</div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+
+            // Ngắt trang
+            container.innerHTML += `<div class="html2pdf__page-break"></div>`;
+
+            // PHẦN 2: ANSWER KEY (Cho giáo viên)
+            container.innerHTML += `<h2 class="text-xl font-bold mb-4 border-b pb-2 text-rose-600">SECTION 2: TEACHER'S KEY</h2>`;
+            
+            selectedQuestions.forEach((q, index) => {
+                const html = `
+                    <div class="pdf-question-container mb-4 p-4 bg-slate-50 border rounded-lg text-sm">
+                        <div class="font-bold text-slate-800">Q${index + 1}: <span class="text-green-600">${q.correct_answer || "N/A"}</span></div>
+                        <div class="mt-1 flex gap-4 text-xs text-slate-500">
+                            <span>Difficulty: ${q.expert_difficulty}</span>
+                            <span>Band: ${q.expert_score_band}</span>
+                        </div>
+                        <div class="mt-2 text-slate-600 text-xs italic">Note: ${q.expert_notes || "No explanation."}</div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+
+            // Gọi thư viện html2pdf
+            const element = document.getElementById('pdf-template');
+            element.classList.remove('hidden'); // Hiện tạm thời để chụp ảnh
+            
+            const opt = {
+                margin:       [10, 15, 10, 15], // Top, Left, Bottom, Right
+                filename:     `SAT_Exam_${new Date().toISOString().slice(0,10)}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 }, // Tăng độ nét
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Tạo PDF xong thì ẩn lại
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.add('hidden');
+            });
+        }
+
+        // Utils
+        async function deleteQuestion(id) {
+            if(!confirm(`Delete Question #${id}?`)) return;
+            try {
+                const res = await fetch(`/api/questions/${id}`, { method: 'DELETE' });
+                if(res.ok) loadLibrary();
+            } catch(e) { alert("Error."); }
+        }
+
+        function openModal(id) {
+            const item = allQuestionsData.find(q => q.id === id);
+            if(!item) return;
+            document.getElementById('modalId').innerText = `ID: #${item.id}`;
+            document.getElementById('modalTopic').innerText = item.child_topic;
+            const diffEl = document.getElementById('modalDiff');
+            diffEl.innerText = item.expert_difficulty;
+            diffEl.className = "px-3 py-1 rounded-lg text-[10px] font-bold uppercase border " + 
+                (item.expert_difficulty === "Easy" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : 
+                item.expert_difficulty === "Medium" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-rose-50 text-rose-700 border-rose-200");
+            document.getElementById('modalBand').innerText = `Band ${item.expert_score_band}`;
+            document.getElementById('modalQuestion').innerText = item.question_text;
+            document.getElementById('modalOptA').innerText = item.option_a;
+            document.getElementById('modalOptB').innerText = item.option_b;
+            document.getElementById('modalOptC').innerText = item.option_c;
+            document.getElementById('modalOptD').innerText = item.option_d;
+            document.getElementById('modalCorrect').innerText = item.correct_answer || "N/A";
+            document.getElementById('modalNotes').innerText = item.expert_notes || "No notes.";
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('detailModal').classList.add('hidden'); }
+        document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeModal(); });
+
+        loadLibrary();
+    </script>
+</body>
+</html>

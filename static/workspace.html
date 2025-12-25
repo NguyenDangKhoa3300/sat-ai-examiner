@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace | SAT AI Examiner</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="gradient-bg h-screen flex overflow-hidden text-slate-800">
+
+    <aside class="sidebar h-full hidden md:flex w-[260px] flex-col bg-white/40 backdrop-blur-xl border-r border-white/50 p-6 z-50">
+        <div class="mb-10 flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg hover:rotate-12 transition">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <span class="font-extrabold text-xl tracking-tight text-slate-800">SAT AI Tool</span>
+        </div>
+
+        <nav class="flex-1 space-y-2">
+            <a href="/app" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 transition-all">
+                <i class="fa-solid fa-wand-magic-sparkles w-5"></i> <span class="font-bold">Workspace</span>
+            </a>
+            <a href="/library" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/60 hover:text-blue-600 transition-all">
+                <i class="fa-solid fa-folder-open w-5"></i> <span class="font-bold">Library</span>
+            </a>
+            <a href="/analytics" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/60 hover:text-blue-600 transition-all">
+                <i class="fa-solid fa-chart-pie w-5"></i> <span class="font-bold">Analytics</span>
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-slate-200/50">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-white border border-blue-100 flex items-center justify-center text-slate-400 font-bold text-lg shadow-sm">
+                    👤
+                </div>
+                <div>
+                    <p id="sidebarUserName" class="text-sm font-bold text-slate-700">Teacher</p>
+                    <p class="text-xs text-green-600 font-bold flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online</p>
+                </div>
+            </div>
+            <a href="/" class="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-rose-500 transition pl-1">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content flex-1 relative overflow-y-auto overflow-x-hidden">
+        
+        <button id="toggleSoundBtn" class="absolute top-6 right-8 z-40 bg-white/80 hover:bg-white p-2 px-4 rounded-full shadow-sm text-green-600 text-xs font-bold uppercase transition hover:scale-105 backdrop-blur-sm border border-white/50">
+            <i class="fa-solid fa-music"></i> Music On
+        </button>
+
+        <div class="max-w-6xl mx-auto pt-8 pb-24 px-6 fade-in">
+            
+            <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">Exam Workspace</h2>
+                    <p class="text-slate-500">Create, Analyze & Refine questions with AI.</p>
+                </div>
+                
+                <div class="flex gap-3">
+                    <a href="/api/download-template" class="bg-white hover:bg-slate-50 text-slate-600 border border-slate-300 px-4 py-2.5 rounded-xl font-bold shadow-sm transition flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-download"></i> Template
+                    </a>
+
+                    <input type="file" id="excelInput" accept=".xlsx" class="hidden" onchange="uploadExcel()">
+                    <button onclick="document.getElementById('excelInput').click()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-emerald-500/30 transition flex items-center gap-2 transform hover:-translate-y-1 text-sm border border-emerald-500">
+                        <i class="fa-solid fa-file-excel"></i> Batch Import (Excel)
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-6">
+                
+                <div class="w-full lg:w-1/2">
+                    <div class="glass p-8 rounded-3xl shadow-sm border border-white/60">
+                        <form id="satForm" class="space-y-5">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Domain</label>
+                                    <div class="relative"><select id="domainSelect" class="w-full p-3 pl-4 bg-white/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"><option disabled selected>Select Domain</option></select></div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Topic</label>
+                                    <div class="relative"><select id="topicSelect" disabled class="w-full p-3 pl-4 bg-slate-100/80 rounded-xl transition"><option disabled selected>Waiting...</option></select></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Question Content</label>
+                                <textarea id="questionText" rows="6" placeholder="Paste your question content here..." class="w-full p-4 bg-white/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none transition"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" id="optA" placeholder="A. Option" class="p-3 bg-white/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                                <input type="text" id="optB" placeholder="B. Option" class="p-3 bg-white/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                                <input type="text" id="optC" placeholder="C. Option" class="p-3 bg-white/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                                <input type="text" id="optD" placeholder="D. Option" class="p-3 bg-white/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition">
+                            </div>
+
+                            <button type="submit" id="submitBtn" class="group w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                                <span>Evaluate Difficulty</span> <i class="fa-solid fa-wand-magic-sparkles group-hover:rotate-12 transition"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="w-full lg:w-1/2">
+                    <div class="glass h-full p-8 rounded-3xl flex flex-col items-center justify-center text-center relative min-h-[550px] border border-white/60">
+                        
+                        <div id="welcomeState" class="fade-in">
+                            <div class="robot-container scale-90 mb-6">
+                                <div class="robot-antenna"><div class="antenna-ball"></div></div>
+                                <div class="robot-head"><div class="robot-eyes"><div class="eye"></div><div class="eye"></div></div></div>
+                            </div>
+                            <h3 class="text-2xl font-bold text-slate-700">Ready, <span id="displayUserName" class="text-blue-600">Teacher</span>!</h3>
+                            <p id="greetingText" class="text-slate-400 text-sm mt-2">Waiting for your input... 🎵</p>
+                        </div>
+
+                        <div id="loadingState" class="hidden absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 backdrop-blur-md rounded-3xl">
+                            <div class="robot-container">
+                                <div class="robot-antenna"><div class="antenna-ball bg-green-500"></div></div>
+                                <div class="robot-head bg-indigo-600">
+                                    <div class="scanner-beam"></div>
+                                    <div class="robot-eyes"><div class="eye h-1"></div><div class="eye h-1"></div></div>
+                                </div>
+                            </div>
+                            <h3 class="mt-6 font-bold text-indigo-600 animate-pulse text-lg">AI is Analyzing...</h3>
+                        </div>
+
+                        <div id="resultState" class="hidden w-full text-left fade-in relative z-10">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Predicted Level</span>
+                                <span id="scoreLabel" class="px-3 py-1 rounded-full text-xs font-bold border border-slate-200 bg-white">UNKNOWN</span>
+                            </div>
+                            
+                            <div class="flex items-end gap-3 mb-6">
+                                <h2 class="text-8xl font-black text-slate-800 leading-none" id="scoreNum">0</h2>
+                                <div class="pb-2">
+                                    <span class="text-xl font-bold text-slate-400">/ 7</span>
+                                    <div class="text-xs text-slate-400 font-bold uppercase">Band Score</div>
+                                </div>
+                            </div>
+
+                            <div class="w-full bg-slate-200 rounded-full h-4 mb-6 overflow-hidden shadow-inner">
+                                <div id="scoreBar" class="h-full bg-blue-500 w-0 transition-all duration-1000 ease-out"></div>
+                            </div>
+
+                            <div class="bg-white/60 p-5 rounded-2xl shadow-sm border border-white/50 mb-4">
+                                <div class="flex justify-between mb-2 items-center">
+                                    <h4 class="text-xs font-bold text-slate-800 uppercase flex items-center gap-2"><i class="fa-solid fa-microchip text-blue-500"></i> AI Reasoning</h4>
+                                    <button id="replayVoiceBtn" class="text-slate-400 hover:text-blue-600 transition"><i class="fa-solid fa-volume-high"></i></button>
+                                </div>
+                                <div class="mb-3 flex gap-2 items-center text-green-700 font-bold text-sm bg-green-50 p-2 rounded border border-green-100">
+                                    <i class="fa-solid fa-check-circle"></i> <span id="correctAnswerDisplay">Option A</span>
+                                </div>
+                                <p id="reasoningText" class="text-slate-600 text-sm max-h-40 overflow-y-auto pr-2 custom-scrollbar text-justify leading-relaxed"></p>
+                            </div>
+
+                            <button id="resetBtn" class="w-full py-3 text-sm text-slate-400 hover:text-blue-600 font-bold transition flex items-center justify-center gap-2 border border-dashed border-slate-300 rounded-xl hover:bg-blue-50 hover:border-blue-200">
+                                <i class="fa-solid fa-rotate-right"></i> Check Another Question
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="feedbackPopup" class="hidden fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm fade-in">
+        <div class="bg-white rounded-3xl p-8 pt-12 max-w-md w-full shadow-2xl relative text-center border-4 border-blue-100 transform scale-100 transition-all">
+            <button onclick="closePopup()" class="absolute top-4 right-4 text-slate-300 hover:text-slate-500 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div class="absolute -top-14 left-1/2 -translate-x-1/2">
+                <div class="robot-container mini-robot">
+                    <div class="robot-antenna"><div class="antenna-ball"></div></div>
+                    <div class="robot-head"><div class="robot-eyes"><div class="eye"></div><div class="eye"></div></div></div>
+                </div>
+            </div>
+            <h3 class="mt-4 text-2xl font-extrabold text-slate-800">Did I get it right?</h3>
+            <p class="text-slate-500 mb-6 text-sm">Help me learn by checking my work!</p>
+            <div id="feedbackChoices" class="grid grid-cols-2 gap-4">
+                <button id="correctBtn" class="p-4 bg-green-100 hover:bg-green-200 text-green-700 rounded-xl font-bold transition flex flex-col items-center gap-2 shadow-sm hover:shadow">
+                    <i class="fa-solid fa-check-circle text-2xl"></i> <span>Yes, Spot On!</span>
+                </button>
+                <button id="wrongBtn" class="p-4 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-xl font-bold transition flex flex-col items-center gap-2 shadow-sm hover:shadow">
+                    <i class="fa-solid fa-wrench text-2xl"></i> <span>No, Fix It</span>
+                </button>
+            </div>
+            <div id="correctionForm" class="hidden mt-4 text-left bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Select Correct Band:</label>
+                <div class="grid grid-cols-7 gap-1 mb-4">
+                    <button class="band-btn p-2 bg-white border rounded hover:bg-blue-600 hover:text-white text-sm font-bold transition" onclick="selectBand(1)">1</button>
+                    <button class="band-btn p-2 bg-white border rounded hover:bg-blue-600 hover:text-white text-sm font-bold transition" onclick="selectBand(2)">2</button>
+                    <button class="band-btn p-2 bg-white border rounded hover:bg-blue-600 hover:text-white text-sm font-bold transition" onclick="selectBand(3)">3</button>
+                    <button class="band-btn p-2 bg-white border rounded hover:bg-blue-600 hover:text-white text-sm font-bold transition" onclick="selectBand(4)">4</button>
+                    <button class="band-btn p-2 bg-white border rounded hover:bg-blue-600 hover:text-white text-sm font-bold transition" onclick="selectBand(5)">5</button>
+                    <button class="band-btn p-2 bg-white border rounded hover:bg-blue-600 hover:text-white text-sm font-bold transition" onclick="selectBand(6)">6</button>
+                    <button class="band-btn p-2 bg-white border rounded hover:bg-blue-600 hover:text-white text-sm font-bold transition" onclick="selectBand(7)">7</button>
+                </div>
+                <input type="hidden" id="selectedCorrectBand">
+                <button id="submitCorrectionBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition hover:-translate-y-0.5">Teach Me & Save 🎓</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="batchLoading" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm fade-in">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center max-w-sm text-center">
+            <div class="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+            <h3 class="text-xl font-bold text-slate-800">AI is Solving Questions...</h3>
+            <p class="text-slate-500 text-sm mt-2">Zimi is reading your file, predicting answers, and grading difficulty. Please wait...</p>
+            <p class="text-xs text-orange-500 font-bold mt-4 animate-pulse">Do not close this window.</p>
+        </div>
+    </div>
+
+    <button id="chatToggleBtn" class="fixed bottom-6 right-6 z-[1000] group transition-transform hover:scale-110">
+        <div class="relative w-16 h-16 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-full shadow-2xl flex items-center justify-center text-white text-3xl border-4 border-white hover:rotate-12 transition-all">
+            <span class="group-hover:hidden">💬</span><span class="hidden group-hover:block">✨</span>
+            <div class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-bounce"></div>
+        </div>
+        <div class="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white px-3 py-1 rounded-lg text-xs font-bold text-slate-600 shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Chat with Zimi!</div>
+    </button>
+
+    <div id="chatWindow" class="fixed bottom-24 right-6 w-96 h-[500px] z-[999] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-100 transform translate-y-[120%] transition-transform duration-500 ease-in-out">
+        <div class="bg-gradient-to-r from-pink-500 to-purple-600 p-4 flex items-center justify-between text-white shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-xl">🤖</div>
+                <div><h3 class="font-bold text-sm">Zimi Assistant</h3><p class="text-[10px] text-white/80 flex items-center gap-1"><span class="w-2 h-2 bg-green-400 rounded-full"></span> Online</p></div>
+            </div>
+            <button id="closeChatBtn" class="hover:bg-white/20 p-1 rounded transition"><i class="fa-solid fa-chevron-down"></i></button>
+        </div>
+        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-4 custom-scrollbar">
+            <div class="flex gap-3">
+                <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-lg flex-shrink-0 border border-purple-200">🤖</div>
+                <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-slate-600 border border-slate-100">
+                    Hi teacher! I'm <b>Zimi</b>. 🌟<br>Ask me anything about SAT or IELTS!
+                </div>
+            </div>
+        </div>
+        <div class="p-3 bg-white border-t border-slate-100">
+            <form id="chatForm" class="relative">
+                <input type="text" id="chatInput" placeholder="Ask Zimi something..." class="w-full pl-4 pr-12 py-3 bg-slate-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition">
+                <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center hover:bg-purple-700 shadow-sm transition"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <audio id="bgMusic" loop><source src="/static/mozart.mp3" type="audio/mpeg"></audio>
+    <audio id="soundClick" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
+    <audio id="soundSuccess" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+    <audio id="soundPopup" src="https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3"></audio>
+
+    <script src="/static/js/script.js"></script>
+    <script>
+        // Check Login Logic
+        const storedName = localStorage.getItem('zim_user_name');
+        if(storedName) {
+            document.getElementById('displayUserName').innerText = storedName;
+            document.getElementById('sidebarUserName').innerText = storedName;
+        } else {
+            // Nếu chưa đăng nhập, đá về trang Login
+            window.location.href = "/";
+        }
+    </script>
+</body>
+</html>

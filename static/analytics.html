@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics | SAT AI Examiner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="gradient-bg h-screen flex overflow-hidden text-slate-800">
+
+    <aside class="sidebar h-full hidden md:flex w-[260px] flex-col bg-white/40 backdrop-blur-xl border-r border-white/50 p-6 z-50">
+        <div class="mb-10 flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <span class="font-extrabold text-xl tracking-tight text-slate-800">SAT AI Tool</span>
+        </div>
+
+        <nav class="flex-1 space-y-2">
+            <a href="/app" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/60 hover:text-blue-600 transition-all">
+                <i class="fa-solid fa-wand-magic-sparkles w-5"></i> <span class="font-bold">Workspace</span>
+            </a>
+            <a href="/library" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-white/60 hover:text-blue-600 transition-all">
+                <i class="fa-solid fa-folder-open w-5"></i> <span class="font-bold">Library</span>
+            </a>
+            <a href="/analytics" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-500/30 transition-all">
+                <i class="fa-solid fa-chart-pie w-5"></i> <span class="font-bold">Analytics</span>
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-slate-200/50">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-white border border-blue-100 flex items-center justify-center text-slate-400 font-bold text-lg shadow-sm">👤</div>
+                <div>
+                    <p id="sidebarUserName" class="text-sm font-bold text-slate-700">Teacher</p>
+                    <p class="text-xs text-green-600 font-bold flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500"></span> Online</p>
+                </div>
+            </div>
+            <a href="/" class="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-rose-500 transition pl-1">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content flex-1 relative overflow-y-auto p-6 md:p-10">
+        <div class="max-w-7xl mx-auto fade-in">
+            
+            <div class="mb-8">
+                <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">System Analytics</h2>
+                <p class="text-slate-500">Overview of your question bank performance.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="glass p-6 rounded-2xl border border-white/60 shadow-lg flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Questions</p>
+                        <h3 class="text-3xl font-black text-slate-800 mt-1" id="totalCount">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-database"></i>
+                    </div>
+                </div>
+                
+                <div class="glass p-6 rounded-2xl border border-white/60 shadow-lg border-l-4 border-l-emerald-400">
+                    <p class="text-slate-500 text-xs font-bold uppercase">Easy Questions</p>
+                    <h3 class="text-2xl font-black text-emerald-600 mt-1" id="easyCount">0</h3>
+                </div>
+                <div class="glass p-6 rounded-2xl border border-white/60 shadow-lg border-l-4 border-l-amber-400">
+                    <p class="text-slate-500 text-xs font-bold uppercase">Medium Questions</p>
+                    <h3 class="text-2xl font-black text-amber-600 mt-1" id="mediumCount">0</h3>
+                </div>
+                <div class="glass p-6 rounded-2xl border border-white/60 shadow-lg border-l-4 border-l-rose-500">
+                    <p class="text-slate-500 text-xs font-bold uppercase">Hard Questions</p>
+                    <h3 class="text-2xl font-black text-rose-600 mt-1" id="hardCount">0</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <div class="glass p-6 rounded-3xl border border-white/60 shadow-lg">
+                    <h4 class="font-bold text-slate-700 mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-purple-500"></i> Score Band Distribution
+                    </h4>
+                    <div class="relative h-64">
+                        <canvas id="bandChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass p-6 rounded-3xl border border-white/60 shadow-lg">
+                    <h4 class="font-bold text-slate-700 mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-blue-500"></i> Difficulty Ratio
+                    </h4>
+                    <div class="relative h-64 flex justify-center">
+                        <canvas id="diffChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass p-6 rounded-3xl border border-white/60 shadow-lg lg:col-span-2">
+                    <h4 class="font-bold text-slate-700 mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-orange-500"></i> Top Topics by Quantity
+                    </h4>
+                    <div class="relative h-72">
+                        <canvas id="topicChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check Login
+        const storedName = localStorage.getItem('zim_user_name');
+        if(storedName) document.getElementById('sidebarUserName').innerText = storedName;
+        else window.location.href = "/";
+
+        // Fetch Data & Draw Charts
+        async function initDashboard() {
+            try {
+                const res = await fetch('/api/analytics-data');
+                const data = await res.json();
+
+                // 1. Update KPI Cards
+                document.getElementById('totalCount').innerText = data.total;
+                document.getElementById('easyCount').innerText = data.difficulty.Easy;
+                document.getElementById('mediumCount').innerText = data.difficulty.Medium;
+                document.getElementById('hardCount').innerText = data.difficulty.Hard;
+
+                // 2. Draw Band Chart (Bar)
+                new Chart(document.getElementById('bandChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Band 1', 'Band 2', 'Band 3', 'Band 4', 'Band 5', 'Band 6', 'Band 7'],
+                        datasets: [{
+                            label: 'Questions',
+                            data: data.bands,
+                            backgroundColor: '#8b5cf6',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+
+                // 3. Draw Difficulty Chart (Doughnut)
+                new Chart(document.getElementById('diffChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Easy', 'Medium', 'Hard'],
+                        datasets: [{
+                            data: [data.difficulty.Easy, data.difficulty.Medium, data.difficulty.Hard],
+                            backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+
+                // 4. Draw Topic Chart (Horizontal Bar)
+                new Chart(document.getElementById('topicChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.topics.labels,
+                        datasets: [{
+                            label: 'Question Count',
+                            data: data.topics.values,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: { 
+                        indexAxis: 'y', // Horizontal
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } } 
+                    }
+                });
+
+            } catch (error) {
+                console.error("Analytics Error:", error);
+            }
+        }
+
+        initDashboard();
+    </script>
+</body>
+</html>
